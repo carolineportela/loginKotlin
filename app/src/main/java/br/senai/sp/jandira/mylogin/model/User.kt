@@ -1,11 +1,12 @@
 package br.senai.sp.jandira.mylogin.model
 
 import androidx.room.Entity
+import androidx.room.PrimaryKey
 
 
-@Entity
+@Entity(tableName = "tbl_user")
 data class User(
-    var id: Long = 0,
+    @PrimaryKey (autoGenerate = true)var id: Long = 0,
     var userName: String = "",
     var phone: String = "",
     var email: String = "",
