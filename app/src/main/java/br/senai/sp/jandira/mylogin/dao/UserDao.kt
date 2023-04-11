@@ -25,4 +25,8 @@ interface UserDao {
     //se o e-mail nao estiver cadastrado,cria-se um novo usuario
     @Query("SELECT * FROM tbl_user WHERE email = :email")
     fun findUserByEmail(email: String): User
+
+    //funcao q busca se o email e a senha que o ususario digiou esta igual no banco de dados
+    @Query("SELECT * FROM tbl_user WHERE email = :email AND password = :password")
+    fun authenticate(email: String,password: String): User
 }

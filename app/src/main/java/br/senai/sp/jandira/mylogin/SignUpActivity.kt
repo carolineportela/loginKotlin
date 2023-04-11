@@ -1,31 +1,42 @@
 package br.senai.sp.jandira.mylogin
 
+import android.content.ContentValues.TAG
+import android.content.Context
 import android.media.Image
 import android.os.Bundle
+import android.util.Log
 import android.widget.Space
+import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
-import androidx.compose.foundation.BorderStroke
-import androidx.compose.foundation.Image
-import androidx.compose.foundation.background
+import androidx.compose.foundation.*
+import androidx.compose.foundation.gestures.scrollable
 import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.*
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Email
 import androidx.compose.material.icons.filled.Home
-import androidx.compose.runtime.Composable
+import androidx.compose.runtime.*
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import br.senai.sp.jandira.mylogin.model.User
+import br.senai.sp.jandira.mylogin.repository.UserRepository
 import br.senai.sp.jandira.mylogin.ui.theme.MyLoginTheme
+
 
 class SignUpActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -45,6 +56,28 @@ class SignUpActivity : ComponentActivity() {
 @Preview(showBackground = true, showSystemUi = true)
 @Composable
 fun SignUp() {
+    var userNameState by rememberSaveable {
+        mutableStateOf("")
+    }
+
+    var phoneState by remember {
+        mutableStateOf("")
+    }
+
+    var emailState by remember {
+        mutableStateOf("")
+    }
+
+    var passwordState by remember {
+        mutableStateOf("")
+    }
+
+    var over18State by remember {
+        mutableStateOf(false)
+    }
+
+    var context = LocalContext.current
+
     Surface(
         modifier = Modifier.fillMaxSize(),
     ) {
@@ -72,7 +105,11 @@ fun SignUp() {
             Column(
                 modifier = Modifier
                     .fillMaxSize()
+                    .weight(weight = 1f)
+                    .verticalScroll(rememberScrollState())
                     .padding(17.dp),
+
+
                 horizontalAlignment = Alignment.CenterHorizontally
             ) {
                 Text(
@@ -147,43 +184,49 @@ fun SignUp() {
                 Spacer(modifier = Modifier.height(32.dp))
 
                 OutlinedTextField(
-                    value = "carolportela",
-                    onValueChange = {},
+                    value = userNameState,
+                    onValueChange = { userNameState = it },
                     modifier = Modifier.fillMaxWidth(),
                     shape = RoundedCornerShape(16.dp),
-                    label = { Text(text = "Username")}
+                    label = { Text(text = "Username") }
                 )
                 Spacer(modifier = Modifier.height(20.dp))
                 OutlinedTextField(
-                    value = "9999-9999",
-                    onValueChange = {},
+                    value = phoneState,
+                    onValueChange = { phoneState = it },
                     modifier = Modifier.fillMaxWidth(),
                     shape = RoundedCornerShape(14.dp),
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
                     label = { Text(text = "Phone") }
 
                 )
                 Spacer(modifier = Modifier.height(15.dp))
                 OutlinedTextField(
-                    value = "carol@gmail.com",
-                    onValueChange = {},
+                    value = emailState,
+                    onValueChange = { emailState = it },
                     modifier = Modifier.fillMaxWidth(),
                     shape = RoundedCornerShape(16.dp),
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Email),
                     label = { Text(text = "E-mail") }
 
                 )
                 Spacer(modifier = Modifier.height(15.dp))
                 OutlinedTextField(
-                    value = "*********",
-                    onValueChange = {},
+                    value = passwordState,
+                    onValueChange = { passwordState = it },
                     modifier = Modifier.fillMaxWidth(),
                     shape = RoundedCornerShape(16.dp),
+                    visualTransformation = PasswordVisualTransformation(),
                     label = { Text(text = "PassWord") }
 
                 )
                 Spacer(modifier = Modifier.height(10.dp))
                 Column(modifier = Modifier.fillMaxWidth(), horizontalAlignment = Alignment.Start) {
                     Row() {
-                        Checkbox(checked = false, onCheckedChange = {}
+                        Checkbox(checked = over18State, onCheckedChange = { checked ->
+                            over18State = checked
+                        }
+
                         )
                         Row(Modifier.padding(top = 14.dp)) {
                             Text(text = "Over 18?")
@@ -197,7 +240,16 @@ fun SignUp() {
 
                     ) {
                     Button(
-                        onClick = {/*TODO*/ },
+                        onClick = {
+                            userSave(
+                                context,
+                                emailState,
+                                userNameState,
+                                phoneState,
+                                passwordState,
+                                over18State
+                            )
+                        },
                         shape = RoundedCornerShape(16.dp),
                         modifier = Modifier
                             .fillMaxWidth()
@@ -222,3 +274,46 @@ fun SignUp() {
         }
     }
 }
+
+fun userSave(
+    context: Context,
+    email: String,
+    userName: String,
+    phone: String,
+    password: String,
+    isOver: Boolean
+) {
+    val userRepository = UserRepository(context)
+
+    //Recuperando no banco um usuario que
+    //tenha o email informado
+    var user = userRepository.findUserByEmail(email)
+
+    // se  user for null,gravamos o
+    //novo usuario , se nao avisamos que o
+    //usuario ja existe.
+
+    if (user == null) {
+        val newUser = User(
+            userName = userName,
+            phone = phone,
+            email = email,
+            password = password,
+            isOver18 = isOver
+        )
+        val id = userRepository.save(newUser)
+        Toast.makeText(
+            context,
+            "User created #$id",
+            Toast.LENGTH_LONG
+        ).show()
+    } else {
+        Toast.makeText(
+            context, "User already exists!!",
+            Toast.LENGTH_SHORT
+        ).show()
+    }
+
+}
+
+
