@@ -3,12 +3,15 @@ package br.senai.sp.jandira.mylogin
 import android.content.ContentValues.TAG
 import android.content.Context
 import android.media.Image
+import android.net.Uri
 import android.os.Bundle
 import android.util.Log
 import android.widget.Space
 import android.widget.Toast
 import androidx.activity.ComponentActivity
+import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.compose.setContent
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.*
 import androidx.compose.foundation.gestures.scrollable
 import androidx.compose.foundation.layout.*
@@ -36,6 +39,8 @@ import androidx.compose.ui.unit.sp
 import br.senai.sp.jandira.mylogin.model.User
 import br.senai.sp.jandira.mylogin.repository.UserRepository
 import br.senai.sp.jandira.mylogin.ui.theme.MyLoginTheme
+import coil.compose.rememberAsyncImagePainter
+import coil.request.ImageRequest
 
 
 class SignUpActivity : ComponentActivity() {
@@ -77,6 +82,24 @@ fun SignUp() {
     }
 
     var context = LocalContext.current
+
+    //Obter foto na galeria de fotos
+    var photoUri by remember {
+        mutableStateOf<Uri?>(null)
+    }
+
+    //Criar o objeto que abrirá a galeria e retornara
+    //a Uri da imagem selecionada
+   //linha abaixo faz a integracao do app e a galeria
+    val launcher = rememberLauncherForActivityResult(
+        contract =  ActivityResultContracts.GetContent()
+    ){
+        photoUri = it
+    }
+    //Coil = pega a imagem e tras pra mim bonitinha
+    var painter = rememberAsyncImagePainter(
+        ImageRequest.Builder(LocalContext.current).data(photoUri).build()
+    )
 
     Surface(
         modifier = Modifier.fillMaxSize(),
@@ -147,8 +170,11 @@ fun SignUp() {
                             contentDescription = null,
                             modifier = Modifier
                                 .align(alignment = Alignment.BottomEnd)
-                                .size(28.dp),
-                            colorFilter = ColorFilter.tint(color = Color.Magenta)
+                                .size(28.dp)
+                                .clickable {
+                                           launcher.launch("image/*")
+                                }
+
 
                         )
 
@@ -156,7 +182,7 @@ fun SignUp() {
 
 
                     Image(
-                        painter = painterResource(id = R.drawable.baseline_add_a_photo_24),
+                        painter = painter,
                         contentDescription = null,
                         modifier = Modifier
                             .align(alignment = Alignment.BottomEnd)
