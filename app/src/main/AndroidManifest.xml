@@ -17,12 +17,12 @@
             android:label="@string/title_activity_my_trips"
             android:theme="@style/Theme.MyLogin" />
         <activity
-            android:name=".MyTrips"
+            android:name=".MainActivity"
             android:exported="false"
             android:label="MainActivity"
             android:theme="@style/Theme.MyLogin" />
         <activity
-            android:name=".MainActivity"
+            android:name=".MyTrips"
             android:screenOrientation="portrait"
             android:exported="true"
             android:label="SignUpActivity"
